@@ -1,4 +1,13 @@
 """
+author: mathildelpx
+
+experiment: MLR stimulation in tail-free larval zebrafish
+input: behavior data (manually segmented and categorized bouts, output from extract_ZZ_output.py and manualBoutSegmentation.py) and stimulation information
+output: 
+* df_bout_all; dataframe with info, for each bout ever produced during MLR stimulation (all kinematic parameters, stimulation parameters)
+* df_electrode_placement; dataframe with info, for each electrode position tested, of the median ratio of forward vs struggle produced by stimulation
+
+figure: Fig. 2 panels [c, d, f] and Fig. 3 [b, c, d, f, g, h]
 
 """
 

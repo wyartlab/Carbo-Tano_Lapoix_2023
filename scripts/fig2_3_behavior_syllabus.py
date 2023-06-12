@@ -323,6 +323,7 @@ def get_interbout_interval(bout, df_bout, fps):
 
     return output
 
+# Initialize
 
 master_path = '/network/lustre/iss01/wyart/analyses/mathilde.lapoix/MLR/Behavior/'
 summary_csv = pd.read_csv('/network/lustre/iss01/wyart/analyses/2pehaviour/MLR_analyses/'
@@ -335,13 +336,13 @@ logging.basicConfig(handlers=handlers,
 console = logging.StreamHandler()
 console.setLevel(logging.INFO)
 
+# Build dataset df_bout_all
+
 fish = list(set(summary_csv.fishlabel))
 clean_fish = [x for x in fish if str(x) != 'nan']
 
 prop_on_stim_all, prop_f_stim_all, prop_s_stim_all = ([], [], [])
 prop_on_rest_all, prop_f_rest_all, prop_s_rest_all = ([], [], [])
-# prop_f_bend_all = []
-# prop_s_bend_all = []
 n_bouts_all = []
 n_struggle_all = []
 n_forward_all = []
@@ -359,11 +360,7 @@ electrode_pos_all = []
 dict_all = {}
 dict_bends_all = {}
 
-# _ = pd.Series(summary_csv.index).apply(run_ZZ_extraction, args=(summary_csv, master_path))
-# plt.close()
-
 plt.style.use('seaborn-poster')
-# pd.Series(clean_fish).apply(plot_ta_vs_stim, args=(summary_csv, master_path))
 
 for index in summary_csv.index:
 
@@ -480,20 +477,6 @@ for index in summary_csv.index:
                                                                    args=(df_bout, time_indices_bh, abf,
                                                                          shift, nStim, stim_dur))
 
-        # create df bends
-        # df_bend = create_df_bend(df_bout, df_frame)
-        # dict_bends_all[fishlabel + trial] = df_bend
-        #
-        # # compute mean and median power for each bout
-        #
-        # df_bout['mean_power'] = [np.nanmean(df_bend.loc[df_bend.BoutNum == bout, 'instant_power']) for bout in
-        #                          df_bout.index]
-        # df_bout['median_power'] = [np.nanmedian(df_bend.loc[df_bend.BoutNum == bout, 'instant_power']) for bout in
-        #                            df_bout.index]
-
-        # Get new category of bout
-        # df_bout['new_cat'] = pd.Series(df_bout.index).apply(get_bout_new_category, args=(df_bend,))
-
         # # Get for each stim, nBouts and nBouts of each type:
         n_bouts_all.extend([len(df_bout[df_bout.stim_num == i]) for i in range(nStim)])
         n_struggle_all.extend([len(df_bout[(df_bout.stim_num == i) & (df_bout.manual_cat == 'S')]) for i in range(nStim)])
@@ -501,8 +484,11 @@ for index in summary_csv.index:
 
         dict_all[fishlabel + trial] = df_bout
 
+# Pool
+
 df_bout_all = pd.concat(dict_all, axis=0, join='outer', sort=False, ignore_index=True)
-# df_bend_all = pd.concat(dict_bends_all, axis=0, join='outer', sort=False, ignore_index=True)
+
+# Build dataframe per experiment
 
 df = pd.DataFrame({'fishlabel': np.repeat(fish_col, 2),
                    'trial': np.repeat(trial_col, 2),
@@ -546,7 +532,8 @@ for i in df.query("condition == 'stim'").index:
     print(i)
 
 
-# TODO: locate where this dataframe was saved, it's probably df_electrode
+# Build df_electrode_placement.csv
+
 df_electorde_placement = pd.DataFrame(
     columns=['date', 'fishlabel', 'electrode_placement', 'ratio_f_s', 'median_ratio_f_s'],
     index=range(len(set(df.electrode_placement))))
@@ -562,7 +549,9 @@ for i in set(df.electrode_placement):
     df_electorde_placement.at[i, 'ratio_f_s'] = ratio_f_s
     df_electorde_placement.at[i, 'median_ratio_f_s'] = np.nanmedian(ratio_f_s)
     
-    
+
+# Save 
+
 df_bout_all.to_csv(master_path + '/analysis_10/df_bout_all.csv')
 df.to_csv(master_path + '/analysis_10/df.csv')
 

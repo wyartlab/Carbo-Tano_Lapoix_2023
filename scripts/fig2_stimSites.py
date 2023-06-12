@@ -1,17 +1,13 @@
 import pandas as pd
 import numpy as np
 
-# For paper Carbo-Tano, Lapoix 2022
+# For paper Carbo-Tano, Lapoix 2023
 # From dataset: MLR electrical stimulation, different params, while recording tail angle of the zebrafish larvae
 # Script function: for each stimulation sites, outputs electrode's position and summary of behavior elicited
 
-
-# df_electrode = pd.read_csv('/home/mathilde.lapoix/Téléchargements/df_electrode_placement.csv')
-# df_behavior = pd.read_csv('/home/mathilde.lapoix/Documents/MLR_paper/df.csv')
-# df_bout = pd.read_csv('/home/mathilde.lapoix/Documents/MLR_paper/new_df_bout_all.csv')
-df_electrode = pd.read_csv('/network/lustre/iss01/wyart/analyses/mathilde.lapoix/MLR/Anatomy/df_electrode_placement.csv')
-df_behavior = pd.read_csv('/network/lustre/iss01/wyart/analyses/mathilde.lapoix/MLR/Datasets/Behavior/df.csv')
-df_bout = pd.read_csv('/network/lustre/iss01/wyart/analyses/mathilde.lapoix/MLR/Datasets/Behavior/new_df_bout_all.csv')
+df_electrode = pd.read_csv('./df_electrode_placement.csv')
+df_behavior = pd.read_csv('./df.csv')
+df_bout = pd.read_csv('./new_df_bout_all.csv')
 
 for stim_id, df_index in enumerate(df_behavior[df_behavior.condition == 'stim'].index):
 
@@ -19,8 +15,9 @@ for stim_id, df_index in enumerate(df_behavior[df_behavior.condition == 'stim'].
 
     if df_behavior.n_bouts[df_index] == 0:
         output = np.nan
-
-    else:  #  compute ratio of forward vs struggle bouts elicited by this stim site
+        
+    # Compute ratio of forward vs struggle elicitied at this stim site, for this trial
+    else: 
         if df_behavior.stim_int[df_index] == 0.1:  #  for 40s stim duration
             print('40s stim, taking proportion of time spent swimming')
             fish, trial = df_behavior.fishlabel[df_index], df_behavior.trial[df_index]
@@ -70,6 +67,5 @@ for stim_id, df_index in enumerate(df_behavior[df_behavior.condition == 'stim'].
     df_behavior.at[df_index, 'z_electrode'] = z_elec
     df_behavior.at[df_index, 'mean_ratio_f_s'] = median_ratio
 
-# df_behavior.to_csv('/home/mathilde.lapoix/Documents/MLR_paper/df_per_stim.csv')
-df_behavior.to_csv('/network/lustre/iss01/wyart/analyses/mathilde.lapoix/MLR/Datasets/Behavior/df_per_stim.csv')
+df_behavior.to_csv('./df_per_stim.csv')
 

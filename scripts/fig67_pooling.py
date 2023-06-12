@@ -2,17 +2,23 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
+from scipy.stats import linregress
 import numpy as np
 import seaborn as sns
 import shelve
 
 plt.style.use('seaborn-poster')
 
-summary_csv = pd.read_csv('/network/lustre/iss01/wyart/analyses/2pehaviour/MLR_analyses/data_summary_BH.csv')
-data_path = '/network/lustre/iss01/wyart/analyses/2pehaviour/MLR_analyses/ML_pipeline_output/fig6/'
-save_path = '/network/lustre/iss01/wyart/analyses/2pehaviour/MLR_analyses/ML_pipeline_output/fig6/Jan_2022/'
+# Initialise
+
+summary_csv = pd.read_csv('./data_summary_BH.csv')
+data_path = './'
+save_path = './'
 features = ['freq_abs', 'freq_change', 'amp_abs', 'amp_change']
 
+# Load data and pool
+
+## Load for each exp the dataframe with regression analysis 
 dict_linReg = {}
 neuron_id = 0
 for exp in os.listdir(data_path):
@@ -39,49 +45,9 @@ for exp in os.listdir(data_path):
 
 df_linReg_all = pd.concat(dict_linReg, ignore_index=True)
 
-#  wide format
+## Load big df with normalised position
 
-# df_wide = pd.DataFrame({'alpha0': list(df_linReg_all[df_linReg_all.feature_id == 0].alpha),
-#                         'alpha1': list(df_linReg_all[df_linReg_all.feature_id == 1].alpha),
-#                         'alpha2': list(df_linReg_all[df_linReg_all.feature_id == 2].alpha),
-#                         'alpha3': list(df_linReg_all[df_linReg_all.feature_id == 3].alpha)})
-#
-# wcss = []  # store inertia of model
-#
-# for i in range(1, 30):
-#     kmeans = KMeans(n_clusters=i, init='k-means++', max_iter=300, n_init=10, random_state=0)
-#     kmeans.fit(df_wide)
-#     wcss.append(kmeans.inertia_)
-# plt.plot(range(1, 30), wcss)
-# plt.title('Elbow Method')
-# plt.xlabel('Number of clusters')
-# plt.ylabel('WCSS')
-#
-# n_clusters_kmean = 6
-#
-# kmeans = KMeans(n_clusters=n_clusters_kmean, init='k-means++', max_iter=300, n_init=10, random_state=0)
-#
-# results_kmean = kmeans.fit_predict(df_wide[['alpha0', 'alpha1', 'alpha2', 'alpha3']])
-# df_wide['label'] = results_kmean
-# df_linReg_all['kmean_label'] = np.tile(results_kmean, len(features))
-#
-# plt.style.use('seaborn-talk')
-#
-# fig, ax = plt.subplots(1, 2)
-# sns.swarmplot(data=df_linReg_all, y='alpha', x='feature_label',
-#               hue='kmean_label', ax=ax[0], palette='tab10')
-# ax[0].legend(bbox_to_anchor=(1.2, 1))
-#
-# fig, ax = plt.subplots(1, n_clusters_kmean, sharex=True, sharey=True)
-# for i in range(n_clusters_kmean):
-#     sns.violinplot(data=df_linReg_all[df_linReg_all.kmean_label == i], y='alpha', x='feature_label', ax=ax[i])
-#
-# #  df_linReg_all.to_csv(data_path + '/df_linReg_all.csv')
-
-# Load big df with norm position
-
-df_all = pd.read_pickle('/network/lustre/iss01/wyart/analyses/mathilde.lapoix/MLR/V2a_recruitment_behavior/'
-                        'analysis_11/df_with_spinal_cord.pkl')
+df_all = pd.read_pickle('./df_with_spinal_cord.pkl')
 df_all = df_all[df_all.final_cell_group != 'spinal_cord']
 
 df_linReg_all['norm_x_pos'] = np.nan
@@ -107,21 +73,15 @@ for neuron_id in df_linReg_all.neuron_id.unique():
 
 df_linReg_all.to_pickle(save_path + '/df_linReg_all.pkl')
 
+## Load reference ops file
+
 ops_ref = np.load(
-    '/network/lustre/iss01/wyart/rawdata/2pehaviour/MLR/Calcium_Imaging/210121/F05/70um_bh/suite2p/plane0/ops.npy',
+    './ops.npy',
     allow_pickle=True).item()
 
-# check norm position
+# Visualize
 
-# for exp in os.listdir(data_path):
-#     if os.path.isdir(data_path + exp):
-#         fig, ax = plt.subplots()
-#         ax.imshow(ops_ref['meanImg'], cmap='Greys')
-#         sns.scatterplot(data=df_linReg_all[df_linReg_all.exp == exp],
-#                         y='norm_x_pos', x='norm_y_pos', ax=ax)
-#         fig.suptitle(exp)
-
-# Plot positions of cells in the chosen clusters, for each experiment
+## Plot positions of cells in the chosen clusters, for each experiment
 
 fig, ax = plt.subplots(1, 1, figsize=(4, 6))
 ax.imshow(ops_ref['meanImg'], cmap='Greys')
@@ -134,7 +94,7 @@ ax.legend(bbox_to_anchor=(1.1, 1))
 fig.suptitle('All cells in chosen cluster')
 fig.savefig(save_path + '/all_cells_chosen_cluster.svg')
 
-# Plot forward activity index of cells in picked cluster only
+## Plot forward activity index of cells in picked cluster only
 
 df_all['in_chosen_cluster'] = False
 df_all['useLinReg'] = False
@@ -151,6 +111,8 @@ for neuron_id in df_linReg_all.neuron_id.unique():
                    (df_all.cell == cell), 'useLinReg'] = True
 
 ## compute forward activity
+
+# FIGURE 8 PANEL F
 
 df_all['pop_clustering'] = False
 for exp in df_linReg_all.exp.unique():
@@ -172,7 +134,6 @@ sns.displot(data=df_all[(df_all.syl == 0) & (df_all.pop_clustering)], x='forward
 plt.savefig(save_path + 'kde_forward_activity_index.svg')
 
 #  Plot duration encoding
-from scipy.stats import linregress
 
 for cell in set(df_all[df_all.in_chosen_cluster].cell_id):
 
@@ -229,6 +190,8 @@ succesfull_duration_encoded_cell_id = list(df_no_duplicates[df_no_duplicates.in_
                                                             df_no_duplicates.group_oscillation_encoding].cell_id)
 
 #  Map all alpha color and size encoded but only sig & positive
+
+# panel G2
 fig, ax = plt.subplots(1, 4, figsize=(12, 6))
 for i, j in enumerate(df_linReg_all.feature_label.unique()):
     ax[i].imshow(ops_ref['meanImg'], cmap='Greys')
@@ -245,42 +208,7 @@ for i, j in enumerate(df_linReg_all.feature_label.unique()):
         ax[i].get_legend().remove()
 fig.savefig(save_path + '/sig_alpha_map_color_size_coded.svg')
 
-#  Map all alpha, but split by plane
-fig, ax = plt.subplots(2, 4, figsize=(12, 14))
-fig.suptitle('70um (top) & 90 um (down)')
-for i, j in enumerate(df_linReg_all.feature_label.unique()):
-    ax[0, i].imshow(ops_ref['meanImg'], cmap='Greys')
-    sns.scatterplot(data=df_linReg_all[
-        (df_linReg_all.feature_label == j) & (df_linReg_all.useLinReg)
-        & (df_linReg_all.significant_pvalue)
-        & (df_linReg_all.alpha > 0) & (df_linReg_all.approx_plane == '70um')],
-                    x='norm_y_pos', y='norm_x_pos',
-                    hue='alpha', hue_norm=(0, 40),
-                    size='alpha', size_norm=(0, 40),
-                    linewidth=2, palette='Blues',
-                    ax=ax[0, i])
-    ax[0, i].set_title('70um_' + j)
-    if i < 3:
-        ax[0, i].get_legend().remove()
-
-    ax[1, i].imshow(ops_ref['meanImg'], cmap='Greys')
-    sns.scatterplot(data=df_linReg_all[
-        (df_linReg_all.feature_label == j) & (df_linReg_all.useLinReg)
-        & (df_linReg_all.significant_pvalue)
-        & (df_linReg_all.alpha > 0) & (df_linReg_all.approx_plane == '90um')],
-                    x='norm_y_pos', y='norm_x_pos',
-                    hue='alpha', hue_norm=(0, 40),
-                    size='alpha', size_norm=(0, 40),
-                    linewidth=2, palette='Blues',
-                    ax=ax[1, i])
-    ax[1, i].set_title('90um_' + j)
-    if i < 3:
-        try:
-            ax[1, i].get_legend().remove()
-        except AttributeError:
-            continue
-fig.savefig(save_path + '/sig_alpha_map_plane_wise.svg')
-
+# panel G2: background
 fig, ax = plt.subplots(figsize=(12, 6))
 ax.imshow(ops_ref['meanImg'], cmap='Greys')
 sns.scatterplot(data=df_linReg_all[(df_linReg_all.feature_id == 0) & (df_linReg_all.useLinReg)],
@@ -480,10 +408,10 @@ fig.savefig(save_path + '/double_explained_TBF_and_NOT_duration_encoding.svg')
 
 # NOT SAVED HERE IN JAN
 df_all.to_csv(
-    '/network/lustre/iss01/wyart/analyses/mathilde.lapoix/MLR/V2a_recruitment_behavior/analysis_11/df_with_linReg.csv')
+    './df_with_linReg.csv')
 
 df_all.to_pickle(
-    '/network/lustre/iss01/wyart/analyses/mathilde.lapoix/MLR/V2a_recruitment_behavior/analysis_11/df_with_linReg.pkl')
+    './df_with_linReg.pkl')
 
 # ONLY SAVED HERE IN JAN
 

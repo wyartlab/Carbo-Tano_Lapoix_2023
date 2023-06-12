@@ -5,6 +5,7 @@ input: from fig2_3_behavior_syllabus.py
 output: for each stimulation produced, long format dataframe, with electrode's position, stimulation properties and summary of behavior elicited
 function: adds to pre-exisiting longformat dataframe the ratio of forward and electrode placement properties.
 
+figure: Fig. 3 panel b
 """
 
 

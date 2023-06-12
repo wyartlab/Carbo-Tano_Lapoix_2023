@@ -1,12 +1,18 @@
+"""
+
+dataset: MLR electrical stimulation, different params, while recording tail angle of the zebrafish larvae
+input: from fig2_3_behavior_syllabus.py
+output: for each stimulation produced, long format dataframe, with electrode's position, stimulation properties and summary of behavior elicited
+function: adds to pre-exisiting longformat dataframe the ratio of forward and electrode placement properties.
+
+"""
+
+
 import pandas as pd
 import numpy as np
 
-# For paper Carbo-Tano, Lapoix 2023
-# From dataset: MLR electrical stimulation, different params, while recording tail angle of the zebrafish larvae
-# Script function: for each stimulation sites, outputs electrode's position and summary of behavior elicited
-
 df_electrode = pd.read_csv('./df_electrode_placement.csv')
-df_behavior = pd.read_csv('./df.csv')
+df_behavior = pd.read_csv('./df.csv') # previous version of longformat dataframe for each stimulation
 df_bout = pd.read_csv('./new_df_bout_all.csv')
 
 for stim_id, df_index in enumerate(df_behavior[df_behavior.condition == 'stim'].index):
@@ -41,7 +47,7 @@ for stim_id, df_index in enumerate(df_behavior[df_behavior.condition == 'stim'].
         else:
             df_behavior.at[df_index, 'ratio_f_s'] = (n_bouts_f - n_bouts_s) / n_bouts
 
-    # Get distance from center of the electrode placement
+    # get properties of electrode placement
 
     electrode_placement = df_behavior.loc[df_index, 'electrode_placement']
     try:
